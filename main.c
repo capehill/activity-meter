@@ -24,8 +24,10 @@ typedef struct Counter
     size_t called;
     size_t lastTime;
     size_t keys;
-    size_t breakDuration;
+    size_t totalBreakDuration;
+    size_t currentBreakDuration;
     size_t breaks;
+    BOOL breakRegistered;
 } Counter;
 
 static Counter* counter;
@@ -76,11 +78,6 @@ char* activity_string()
     const size_t seconds = counter->lastTime - startTime;
     const size_t minutes = seconds / 60;
 
-    if (counter->breakDuration >= BREAK_LENGTH) {
-        counter->breaks++;
-        counter->breakDuration = 0;
-    }
-
     snprintf(buf, sizeof(buf), "Activity time: %u min %u secs", minutes, seconds - (minutes * 60));
     return buf;
 }
@@ -98,7 +95,14 @@ char* break_string()
         startTimeCurrent = counter->lastTime;
     }
 
-    counter->breakDuration = seconds;
+    counter->currentBreakDuration = seconds;
+
+    if (!counter->breakRegistered && counter->currentBreakDuration >= BREAK_LENGTH) {
+        counter->breaks++;
+        counter->breakRegistered = TRUE;
+    } else if (counter->breakRegistered && counter->currentBreakDuration < BREAK_LENGTH) {
+        counter->breakRegistered = FALSE;
+    }
 
     snprintf(buf, sizeof(buf), "Break time: %u min %u secs", minutes, seconds - (minutes * 60));
     return buf;
@@ -135,8 +139,9 @@ char* rmb_counter_string()
 */
 char* mouse_counter_string()
 {
-    static char buf[32];
-    snprintf(buf, sizeof(buf), "LMB: %u, MMB: %u, RMB: %u", counter->left, counter->middle, counter->right);
+    static char buf[64];
+    snprintf(buf, sizeof(buf), "LMB: %u, MMB: %u, RMB: %u, 4th: %u, 5th: %u",
+        counter->left, counter->middle, counter->right, counter->fourth, counter->fifth);
     return buf;
 }
 
@@ -172,8 +177,8 @@ static struct InputEvent* InputEventHandler(struct InputEvent* events, APTR data
 
     while (e) {
         if (e->ie_Class == IECLASS_RAWMOUSE) {
-            const int x = e->ie_X; //e->ie_position.ie_xy.ie_x;
-            const int y = e->ie_Y; //e->ie_position.ie_xy.ie_y;
+            const int x = e->ie_X;
+            const int y = e->ie_Y;
 
             mc->lastTime = e->ie_TimeStamp.Seconds;
             mc->pixels += sqrt(x * x + y * y);
