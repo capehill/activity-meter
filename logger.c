@@ -7,7 +7,7 @@
 
 static BOOL verbose = FALSE;
 
-static void logLineImpl(const char * fmt, va_list ap)
+static void LogImpl(const char * fmt, va_list ap)
 {
     char buffer[16 * 1024];
     const int len = vsnprintf(buffer, sizeof(buffer), fmt, ap);
@@ -32,33 +32,23 @@ static void logLineImpl(const char * fmt, va_list ap)
     }
 }
 
-void logLine(const char * fmt, ...)
+void Log(const char * fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
 
-    logLineImpl(fmt, ap);
+    LogImpl(fmt, ap);
 
     va_end(ap);
 }
 
-void logAlways(const char * fmt, ...)
-{
-    va_list ap;
-    va_start(ap, fmt);
-
-    logLineImpl(fmt, ap);
-
-    va_end(ap);
-}
-
-void logDebug(const char * fmt, ...)
+void LogDebug(const char * fmt, ...)
 {
     if (verbose) {
         va_list ap;
         va_start(ap, fmt);
 
-        logLineImpl(fmt, ap);
+        LogImpl(fmt, ap);
 
         va_end(ap);
     }

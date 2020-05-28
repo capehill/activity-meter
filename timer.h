@@ -16,21 +16,21 @@ typedef enum ESignalType {
 
 extern TimerContext timer;
 
-BOOL timer_init(TimerContext * tc);
-void timer_quit(TimerContext * tc);
+BOOL TimerInit(TimerContext * tc);
+void TimerQuit(TimerContext * tc);
 
-uint32 timer_signal(TimerContext * tc);
+uint32 TimerSignal(TimerContext * tc);
 
-void timer_start(TimerContext * tc, ULONG seconds, ULONG micros);
-void timer_stop(TimerContext * tc);
-void timer_handle_events(TimerContext * tc);
+void TimerStart(TimerContext * tc, ULONG seconds, ULONG micros);
+void TimerStop(TimerContext * tc);
+void TimerHandleEvents(TimerContext * tc);
 
-ESignalType timer_wait_for_signal(uint32 timerSig, const char* const name);
-void timer_delay(ULONG seconds);
+ESignalType TimerWaitForSignal(uint32 timerSig, const char* const name);
+void TimerDelay(ULONG seconds);
 
-double timer_ticks_to_s(const uint64 ticks);
-double timer_ticks_to_ms(const uint64 ticks);
-double timer_ticks_to_us(const uint64 ticks);
+//double TimerTicksToSeconds(const uint64 ticks);
+//double timer_ticks_to_ms(const uint64 ticks);
+//double timer_ticks_to_us(const uint64 ticks);
 
-struct TimeVal timer_get_systime();
+struct TimeVal TimerGetSysTime();
 

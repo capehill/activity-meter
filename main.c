@@ -37,7 +37,7 @@ static size_t startTimeCurrent;
 
 static const size_t BREAK_LENGTH = 5 * 60;
 
-char* pixels_string()
+char* PixelsString()
 {
     static char buf[32];
     snprintf(buf, sizeof(buf), "Pixels travelled: %u", counter->pixels);
@@ -66,7 +66,7 @@ char* total_activity_string()
     return buf;
 }
 */
-char* activity_string()
+char* ActivityString()
 {
     static char buf[64];
 
@@ -82,11 +82,11 @@ char* activity_string()
     return buf;
 }
 
-char* break_string()
+char* BreakString()
 {
     static char buf[64];
 
-    const size_t now = timer_get_systime().Seconds;
+    const size_t now = TimerGetSysTime().Seconds;
 
     const size_t seconds = counter->lastTime ? now - counter->lastTime : 0;
     const size_t minutes = seconds / 60;
@@ -108,36 +108,14 @@ char* break_string()
     return buf;
 }
 
-char* total_breaks_string()
+char* TotalBreaksString()
 {
     static char buf[32];
     snprintf(buf, sizeof(buf), "Total breaks: %u", counter->breaks);
     return buf;
 }
 
-/*
-char* lmb_counter_string()
-{
-    static char buf[32];
-    snprintf(buf, sizeof(buf), "LMB clicks: %u", mouseCounter->left);
-    return buf;
-}
-
-char* mmb_counter_string()
-{
-    static char buf[32];
-    snprintf(buf, sizeof(buf), "MMB clicks: %u", mouseCounter->middle);
-    return buf;
-}
-
-char* rmb_counter_string()
-{
-    static char buf[32];
-    snprintf(buf, sizeof(buf), "RMB clicks: %u", mouseCounter->right);
-    return buf;
-}
-*/
-char* mouse_counter_string()
+char* MouseCounterString()
 {
     static char buf[64];
     snprintf(buf, sizeof(buf), "LMB: %u, MMB: %u, RMB: %u, 4th: %u, 5th: %u",
@@ -145,7 +123,7 @@ char* mouse_counter_string()
     return buf;
 }
 
-char* key_counter_string()
+char* KeyCounterString()
 {
     static char buf[32];
     snprintf(buf, sizeof(buf), "Keys pressed: %u", counter->keys);
@@ -247,7 +225,7 @@ static void SetupHandler(struct IOStdReq * req)
 
         SendCommand(req, is, IND_ADDHANDLER);
 
-        run_gui();
+        RunGui();
 
         SendCommand(req, is, IND_REMHANDLER);
 
@@ -286,7 +264,7 @@ static void CheckStack()
 
 int main(void)
 {
-    if (!timer_init(&timer)) {
+    if (!TimerInit(&timer)) {
         return -1;
     }
 
@@ -320,7 +298,7 @@ int main(void)
         puts("Failed to allocate message port");
     }
 
-    timer_quit(&timer);
+    TimerQuit(&timer);
 
     CheckStack();
 

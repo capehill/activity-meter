@@ -2,6 +2,6 @@
 
 #include "timer.h"
 
-void run_gui();
+void RunGui();
 
 

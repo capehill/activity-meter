@@ -12,15 +12,15 @@ static int users = 0;
 
 TimerContext timer;
 
-static void read_frequency(void)
+static void ReadFrequency(void)
 {
     struct EClockVal clockVal;
     frequency = ITimer->ReadEClock(&clockVal);
 
-    logLine("Timer frequency %lu ticks / second", frequency);
+    Log("Timer frequency %lu ticks / second", frequency);
 }
 
-BOOL timer_init(TimerContext * tc)
+BOOL TimerInit(TimerContext * tc)
 {
     tc->port = NULL;
     tc->request = NULL;
@@ -64,7 +64,7 @@ BOOL timer_init(TimerContext * tc)
     }
 
     if (!frequency) {
-        read_frequency();
+        ReadFrequency();
     }
 
     users++;
@@ -72,15 +72,15 @@ BOOL timer_init(TimerContext * tc)
     return TRUE;
 
 out:
-    timer_quit(tc);
+    TimerQuit(tc);
 
     return FALSE;
 }
 
-void timer_quit(TimerContext * tc)
+void TimerQuit(TimerContext * tc)
 {
     if ((--users <= 0) && ITimer) {
-        //logLine("ITimer user count %d, dropping it", users);
+        //Log("ITimer user count %d, dropping it", users);
         IExec->DropInterface((struct Interface *) ITimer);
         ITimer = NULL;
     }
@@ -101,28 +101,28 @@ void timer_quit(TimerContext * tc)
     }
 }
 
-uint32 timer_signal(TimerContext * tc)
+uint32 TimerSignal(TimerContext * tc)
 {
     if (!tc->port) {
-        logLine("%s: timer port NULL", __func__);
+        Log("%s: timer port NULL", __func__);
         return 0;
     }
 
     return 1L << tc->port->mp_SigBit;
 }
 
-void timer_start(TimerContext * tc, ULONG seconds, ULONG micros)
+void TimerStart(TimerContext * tc, ULONG seconds, ULONG micros)
 {
     struct TimeVal tv;
     struct TimeVal increment;
 
     if (!tc->request) {
-        logLine("%s: timer request NULL", __func__);
+        Log("%s: timer request NULL", __func__);
         return;
     }
 
     if (!ITimer) {
-        logLine("%s: ITimer NULL", __func__);
+        Log("%s: ITimer NULL", __func__);
         return;
     }
 
@@ -140,12 +140,12 @@ void timer_start(TimerContext * tc, ULONG seconds, ULONG micros)
     IExec->SendIO((struct IORequest *) tc->request);
 }
 
-void timer_handle_events(TimerContext * tc)
+void TimerHandleEvents(TimerContext * tc)
 {
     struct Message *msg;
 
     if (!tc->port) {
-        logLine("%s: timer port NULL", __func__);
+        Log("%s: timer port NULL", __func__);
         return;
     }
 
@@ -158,21 +158,21 @@ void timer_handle_events(TimerContext * tc)
     }
 }
 
-void timer_stop(TimerContext * tc)
+void TimerStop(TimerContext * tc)
 {
     if (!tc->request) {
-        logLine("%s: timer request NULL", __func__);
+        Log("%s: timer request NULL", __func__);
         return;
     }
 
     if (!IExec->CheckIO((struct IORequest *) tc->request)) {
-        logLine("%s: aborting timer IO request %p", __func__, tc->request);
+        Log("%s: aborting timer IO request %p", __func__, tc->request);
         IExec->AbortIO((struct IORequest *) tc->request);
         IExec->WaitIO((struct IORequest *) tc->request);
     }
 }
 
-ESignalType timer_wait_for_signal(uint32 timerSig, const char* const name)
+ESignalType TimerWaitForSignal(uint32 timerSig, const char* const name)
 {
     const uint32 wait = IExec->Wait(SIGBREAKF_CTRL_C | timerSig);
 
@@ -188,21 +188,22 @@ ESignalType timer_wait_for_signal(uint32 timerSig, const char* const name)
     return ESignalType_Timer;
 }
 
-void timer_delay(ULONG seconds)
+void TimerDelay(ULONG seconds)
 {
     const ULONG micros = 0;
 
     TimerContext delayTimer;
 
-    timer_init(&delayTimer);
-    timer_start(&delayTimer, seconds, micros);
+    TimerInit(&delayTimer);
+    TimerStart(&delayTimer, seconds, micros);
 
-    timer_wait_for_signal(timer_signal(&delayTimer), "Delay");
+    TimerWaitForSignal(TimerSignal(&delayTimer), "Delay");
 
-    timer_stop(&delayTimer);
-    timer_quit(&delayTimer);
+    TimerStop(&delayTimer);
+    TimerQuit(&delayTimer);
 }
 
+#if 0
 double timer_ticks_to_s(const uint64 ticks)
 {
     return (double)ticks / (double)frequency;
@@ -217,8 +218,9 @@ double timer_ticks_to_us(const uint64 ticks)
 {
     return 1000000.0 * timer_ticks_to_s(ticks);
 }
+#endif
 
-struct TimeVal timer_get_systime()
+struct TimeVal TimerGetSysTime()
 {
     struct TimeVal tv;
     ITimer->GetSysTime(&tv);

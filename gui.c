@@ -57,38 +57,38 @@ static struct MsgPort* port;
 static const ULONG seconds = 1;
 static const ULONG micros = 0;
 
-static char* getApplicationName()
+static char* GetApplicationName()
 {
     #define maxPathLen 255
 
     static char pathBuffer[maxPathLen];
 
     if (IDOS->GetCliProgramName(pathBuffer, maxPathLen - 1)) {
-        logLine("GetCliProgramName: '%s'", pathBuffer);
+        Log("GetCliProgramName: '%s'", pathBuffer);
     } else {
-        logLine("Failed to get CLI program name, checking task node");
+        Log("Failed to get CLI program name, checking task node");
 
         struct Task* me = IExec->FindTask(NULL);
         snprintf(pathBuffer, maxPathLen, "%s", ((struct Node *)me)->ln_Name);
     }
 
-    logLine("Application name: '%s'", pathBuffer);
+    Log("Application name: '%s'", pathBuffer);
 
     return pathBuffer;
 }
 
-static struct DiskObject* getDiskObject()
+static struct DiskObject* MyGetDiskObject()
 {
     struct DiskObject *diskObject = NULL;
 
     BPTR oldDir = IDOS->SetCurrentDir(IDOS->GetProgramDir());
-    diskObject = IIcon->GetDiskObject(getApplicationName());
+    diskObject = IIcon->GetDiskObject(GetApplicationName());
     IDOS->SetCurrentDir(oldDir);
 
     return diskObject;
 }
 
-static void show_about_window()
+static void ShowAboutWindow()
 {
     objects[OID_AboutWindow] = IIntuition->NewObject(NULL, "requester.class",
         REQ_TitleText, "About Activity meter",
@@ -106,7 +106,7 @@ static void show_about_window()
     }
 }
 
-static Object* create_gui()
+static Object* CreateGui()
 {
     return IIntuition->NewObject(NULL, "window.class",
         WA_ScreenTitle, VERSION_STRING DATE_STRING,
@@ -120,7 +120,7 @@ static Object* create_gui()
         WA_Height, 50,
         WINDOW_Position, WPOS_CENTERMOUSE,
         WINDOW_IconifyGadget, TRUE,
-        WINDOW_Icon, getDiskObject(),
+        WINDOW_Icon, MyGetDiskObject(),
         WINDOW_AppPort, port, // Iconification needs it
         WINDOW_GadgetHelp, TRUE,
         WINDOW_NewMenu, menus,
@@ -132,37 +132,37 @@ static Object* create_gui()
                 LAYOUT_BevelStyle, BVS_GROUP,
                 LAYOUT_AddChild, objects[OID_Activity] = IIntuition->NewObject(NULL, "button.gadget",
                     GA_ReadOnly, TRUE,
-                    GA_Text, activity_string(),
+                    GA_Text, ActivityString(),
                     BUTTON_BevelStyle, BVS_NONE,
                     BUTTON_Transparent, TRUE,
                     TAG_DONE),
                 LAYOUT_AddChild, objects[OID_BreakDuration] = IIntuition->NewObject(NULL, "button.gadget",
                     GA_ReadOnly, TRUE,
-                    GA_Text, break_string(),
+                    GA_Text, BreakString(),
                     BUTTON_BevelStyle, BVS_NONE,
                     BUTTON_Transparent, TRUE,
                     TAG_DONE),
                 LAYOUT_AddChild, objects[OID_Breaks] = IIntuition->NewObject(NULL, "button.gadget",
                     GA_ReadOnly, TRUE,
-                    GA_Text, total_breaks_string(),
+                    GA_Text, TotalBreaksString(),
                     BUTTON_BevelStyle, BVS_NONE,
                     BUTTON_Transparent, TRUE,
                     TAG_DONE),
                 LAYOUT_AddChild, objects[OID_MouseCounter] = IIntuition->NewObject(NULL, "button.gadget",
                     GA_ReadOnly, TRUE,
-                    GA_Text, mouse_counter_string(),
+                    GA_Text, MouseCounterString(),
                     BUTTON_BevelStyle, BVS_NONE,
                     BUTTON_Transparent, TRUE,
                     TAG_DONE),
                 LAYOUT_AddChild, objects[OID_Pixels] = IIntuition->NewObject(NULL, "button.gadget",
                     GA_ReadOnly, TRUE,
-                    GA_Text, pixels_string(),
+                    GA_Text, PixelsString(),
                     BUTTON_BevelStyle, BVS_NONE,
                     BUTTON_Transparent, TRUE,
                     TAG_DONE),
                 LAYOUT_AddChild, objects[OID_KeyCounter] = IIntuition->NewObject(NULL, "button.gadget",
                     GA_ReadOnly, TRUE,
-                    GA_Text, key_counter_string(),
+                    GA_Text, KeyCounterString(),
                     BUTTON_BevelStyle, BVS_NONE,
                     BUTTON_Transparent, TRUE,
                     TAG_DONE),
@@ -172,31 +172,31 @@ static Object* create_gui()
         TAG_DONE); // window.class
 }
 
-static void refresh_object(Object * object)
+static void RefreshObject(Object * object)
 {
     IIntuition->RefreshGList((struct Gadget *)object, window, NULL, -1);
 }
 
-static void refresh()
+static void Refresh()
 {
-    IIntuition->SetAttrs(objects[OID_MouseCounter], GA_Text, mouse_counter_string(), TAG_DONE);
-    IIntuition->SetAttrs(objects[OID_KeyCounter], GA_Text, key_counter_string(), TAG_DONE);
-    IIntuition->SetAttrs(objects[OID_Pixels], GA_Text, pixels_string(), TAG_DONE);
+    IIntuition->SetAttrs(objects[OID_MouseCounter], GA_Text, MouseCounterString(), TAG_DONE);
+    IIntuition->SetAttrs(objects[OID_KeyCounter], GA_Text, KeyCounterString(), TAG_DONE);
+    IIntuition->SetAttrs(objects[OID_Pixels], GA_Text, PixelsString(), TAG_DONE);
 
-    IIntuition->SetAttrs(objects[OID_Activity], GA_Text, activity_string(), TAG_DONE);
-    IIntuition->SetAttrs(objects[OID_BreakDuration], GA_Text, break_string(), TAG_DONE);
-    IIntuition->SetAttrs(objects[OID_Breaks], GA_Text, total_breaks_string(), TAG_DONE);
+    IIntuition->SetAttrs(objects[OID_Activity], GA_Text, ActivityString(), TAG_DONE);
+    IIntuition->SetAttrs(objects[OID_BreakDuration], GA_Text, BreakString(), TAG_DONE);
+    IIntuition->SetAttrs(objects[OID_Breaks], GA_Text, TotalBreaksString(), TAG_DONE);
 
-    refresh_object(objects[OID_MouseCounter]);
-    refresh_object(objects[OID_KeyCounter]);
-    refresh_object(objects[OID_Pixels]);
+    RefreshObject(objects[OID_MouseCounter]);
+    RefreshObject(objects[OID_KeyCounter]);
+    RefreshObject(objects[OID_Pixels]);
 
-    refresh_object(objects[OID_Activity]);
-    refresh_object(objects[OID_BreakDuration]);
-    refresh_object(objects[OID_Breaks]);
+    RefreshObject(objects[OID_Activity]);
+    RefreshObject(objects[OID_BreakDuration]);
+    RefreshObject(objects[OID_Breaks]);
 }
 
-static void handle_gadgets(int id)
+static void HandleGadgets(int id)
 {
     //printf("Gadget %d\n", id);
 
@@ -206,18 +206,18 @@ static void handle_gadgets(int id)
     }
 }
 
-static void handle_iconify(void)
+static void HandleIconify(void)
 {
     window = NULL;
     IIntuition->IDoMethod(objects[OID_Window], WM_ICONIFY);
 }
 
-static void handle_uniconify(void)
+static void HandleUniconify(void)
 {
     window = (struct Window *)IIntuition->IDoMethod(objects[OID_Window], WM_OPEN);
 }
 
-static BOOL handle_menupick(uint16 menuNumber)
+static BOOL HandleMenuPick(uint16 menuNumber)
 {
     struct MenuItem* item = IIntuition->ItemAddress(window->MenuStrip, menuNumber);
 
@@ -225,8 +225,8 @@ static BOOL handle_menupick(uint16 menuNumber)
         const EMenu id = (EMenu)GTMENUITEM_USERDATA(item);
         //printf("menu %x, menu num %d, item num %d, userdata %d\n", menuNumber, MENUNUM(menuNumber), ITEMNUM(menuNumber), (EMenu)GTMENUITEM_USERDATA(item));
         switch (id) {
-            case MID_Iconify: handle_iconify(); break;
-            case MID_About: show_about_window(); break;
+            case MID_Iconify: HandleIconify(); break;
+            case MID_About: ShowAboutWindow(); break;
             case MID_Quit: return FALSE;
         }
     }
@@ -234,12 +234,12 @@ static BOOL handle_menupick(uint16 menuNumber)
     return TRUE;
 }
 
-static void handle_events(void)
+static void HandleEvents(void)
 {
     uint32 signal = 0;
     IIntuition->GetAttr(WINDOW_SigMask, objects[OID_Window], &signal);
 
-    const uint32 timerSignal = timer_signal(&timer);
+    const uint32 timerSignal = TimerSignal(&timer);
 
     BOOL running = TRUE;
 
@@ -262,49 +262,49 @@ static void handle_events(void)
                         running = FALSE;
                         break;
                     case WMHI_GADGETUP:
-                        handle_gadgets(result & WMHI_GADGETMASK);
+                        HandleGadgets(result & WMHI_GADGETMASK);
                         break;
                     case WMHI_ICONIFY:
-                        handle_iconify();
+                        HandleIconify();
                         break;
                     case WMHI_UNICONIFY:
-                        handle_uniconify();
+                        HandleUniconify();
                         break;
                     case WMHI_MENUPICK:
-                        running = handle_menupick(result & WMHI_MENUMASK);
+                        running = HandleMenuPick(result & WMHI_MENUMASK);
                         break;
                 }
             }
         }
 
         if (wait & timerSignal) {
-            timer_handle_events(&timer);
+            TimerHandleEvents(&timer);
             if (window) {
-                refresh();
+                Refresh();
             }
-            timer_start(&timer, seconds, micros);
+            TimerStart(&timer, seconds, micros);
         }
     }
 }
 
 // When profiling, Pause/Resume buttons are disabled
-void run_gui()
+void RunGui()
 {
 	port = IExec->AllocSysObjectTags(ASOT_PORT,
 		ASOPORT_Name, "app_port",
 		TAG_DONE);
 
-    objects[OID_Window] = create_gui();
+    objects[OID_Window] = CreateGui();
 
     if (objects[OID_Window]) {
         if ((window = (struct Window *)IIntuition->IDoMethod(objects[OID_Window], WM_OPEN))) {
-            timer_start(&timer, seconds, micros);
-            handle_events();
+            TimerStart(&timer, seconds, micros);
+            HandleEvents();
         } else {
             puts("Failed to open window");
         }
 
-        timer_stop(&timer);
+        TimerStop(&timer);
 
         IIntuition->DisposeObject(objects[OID_Window]);
     } else {
