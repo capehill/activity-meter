@@ -21,7 +21,8 @@ enum EObject {
     OID_Window,
     OID_AboutWindow,
     OID_Pixels,
-    OID_Activity,
+    OID_AllActivity,
+    OID_CurrentActivity,
     OID_BreakDuration,
     OID_Breaks,
     OID_MouseCounter,
@@ -123,9 +124,15 @@ static Object* CreateGui()
                 LAYOUT_Orientation, LAYOUT_ORIENT_VERT,
                 LAYOUT_Label, "Information",
                 LAYOUT_BevelStyle, BVS_GROUP,
-                LAYOUT_AddChild, objects[OID_Activity] = IIntuition->NewObject(NULL, "button.gadget",
+                LAYOUT_AddChild, objects[OID_AllActivity] = IIntuition->NewObject(NULL, "button.gadget",
                     GA_ReadOnly, TRUE,
-                    GA_Text, ActivityString(),
+                    GA_Text, AllActivityString(),
+                    BUTTON_BevelStyle, BVS_NONE,
+                    BUTTON_Transparent, TRUE,
+                    TAG_DONE),
+                LAYOUT_AddChild, objects[OID_CurrentActivity] = IIntuition->NewObject(NULL, "button.gadget",
+                    GA_ReadOnly, TRUE,
+                    GA_Text, CurrentActivityString(),
                     BUTTON_BevelStyle, BVS_NONE,
                     BUTTON_Transparent, TRUE,
                     TAG_DONE),
@@ -178,7 +185,8 @@ static void Refresh()
     IIntuition->SetAttrs(objects[OID_KeyCounter], GA_Text, KeyCounterString(), TAG_DONE);
     IIntuition->SetAttrs(objects[OID_Pixels], GA_Text, PixelsString(), TAG_DONE);
 
-    IIntuition->SetAttrs(objects[OID_Activity], GA_Text, ActivityString(), TAG_DONE);
+    IIntuition->SetAttrs(objects[OID_AllActivity], GA_Text, AllActivityString(), TAG_DONE);
+    IIntuition->SetAttrs(objects[OID_CurrentActivity], GA_Text, CurrentActivityString(), TAG_DONE);
     IIntuition->SetAttrs(objects[OID_BreakDuration], GA_Text, BreakString(), TAG_DONE);
     IIntuition->SetAttrs(objects[OID_Breaks], GA_Text, TotalBreaksString(), TAG_DONE);
 
@@ -186,7 +194,8 @@ static void Refresh()
     RefreshObject(objects[OID_KeyCounter]);
     RefreshObject(objects[OID_Pixels]);
 
-    RefreshObject(objects[OID_Activity]);
+    RefreshObject(objects[OID_AllActivity]);
+    RefreshObject(objects[OID_CurrentActivity]);
     RefreshObject(objects[OID_BreakDuration]);
     RefreshObject(objects[OID_Breaks]);
 }

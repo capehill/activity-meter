@@ -31,11 +31,12 @@ typedef struct Statistics
 {
     size_t startTime;
     size_t startTimeCurrent;
+    size_t activeMinutesTotal;
+    size_t activeSecondsTotal;
     size_t activeMinutes;
     size_t activeSeconds;
     size_t breakMinutes;
     size_t breakSeconds;
-    size_t totalBreakDuration;
     size_t currentBreakDuration;
     size_t breaks;
     BOOL breakRegistered;
@@ -53,30 +54,49 @@ char* PixelsString()
     return buf;
 }
 
-// All activity
-// Current activity
+static size_t SecsToMins(size_t seconds)
+{
+    return seconds / 60;
+}
 
-void CalculateStats()
+static size_t MinsToSecs(size_t minutes)
+{
+    return minutes * 60;
+}
+
+static void InitStats()
 {
     if (stats.startTime == 0) {
-        // Initialize
-        stats.startTime = counter->lastTime;
+        stats.startTime = TimerGetSysTime().Seconds;
         stats.startTimeCurrent = stats.startTime;
+        counter->lastTime = stats.startTime;
+    }
+}
+
+static void CalculateTotalActivity()
+{
+    stats.activeSecondsTotal = counter->lastTime - stats.startTime;
+    stats.activeMinutesTotal = SecsToMins(stats.activeSecondsTotal);
+}
+
+static void Accumulate()
+{
+    const BOOL passive = counter->lastTime ? (TimerGetSysTime().Seconds > counter->lastTime) : TRUE;
+
+    if (passive) {
+        stats.breakSeconds++;
+        stats.activeSeconds = 0;
+    } else {
+        stats.breakSeconds = 0;
+        stats.activeSeconds++;
     }
 
-    const size_t now = TimerGetSysTime().Seconds;
+    stats.breakMinutes = SecsToMins(stats.breakSeconds);
+    stats.activeMinutes = SecsToMins(stats.activeSeconds);
+}
 
-    stats.activeSeconds = counter->lastTime - stats.startTime;
-    stats.activeMinutes = stats.activeSeconds / 60;
-
-    stats.breakSeconds = counter->lastTime ? (now - counter->lastTime) : 0;
-    stats.breakMinutes = stats.breakSeconds / 60;
-
-    if (stats.breakSeconds == 0) {
-        // Break ended
-        stats.startTimeCurrent = counter->lastTime;
-    }
-
+static void RegisterBreaks()
+{
     stats.currentBreakDuration = stats.breakSeconds;
 
     if (!stats.breakRegistered && stats.currentBreakDuration >= BREAK_LENGTH) {
@@ -85,20 +105,35 @@ void CalculateStats()
     } else if (stats.breakRegistered && stats.currentBreakDuration < BREAK_LENGTH) {
         stats.breakRegistered = FALSE;
     }
-
 }
 
-char* ActivityString()
+void CalculateStats()
+{
+    InitStats();
+    CalculateTotalActivity();
+    Accumulate();
+    RegisterBreaks();
+}
+
+char* AllActivityString()
 {
     static char buf[64];
-    snprintf(buf, sizeof(buf), "Activity time: %u min %u secs", stats.activeMinutes, stats.activeSeconds - (stats.activeMinutes * 60));
+    snprintf(buf, sizeof(buf), "All activity time: %u min %u secs",
+        stats.activeMinutesTotal, stats.activeSecondsTotal - MinsToSecs(stats.activeMinutesTotal));
+    return buf;
+}
+
+char* CurrentActivityString()
+{
+    static char buf[64];
+    snprintf(buf, sizeof(buf), "Current activity time: %u min %u secs", stats.activeMinutes, stats.activeSeconds - MinsToSecs(stats.activeMinutes));
     return buf;
 }
 
 char* BreakString()
 {
     static char buf[64];
-    snprintf(buf, sizeof(buf), "Break time: %u min %u secs", stats.breakMinutes, stats.breakSeconds - (stats.breakMinutes * 60));
+    snprintf(buf, sizeof(buf), "Break time: %u min %u secs", stats.breakMinutes, stats.breakSeconds - MinsToSecs(stats.breakMinutes));
     return buf;
 }
 
@@ -123,18 +158,6 @@ char* KeyCounterString()
     snprintf(buf, sizeof(buf), "Keys pressed: %u", counter->keys);
     return buf;
 }
-
-#if 0
-static struct InputEvent* InputEventHandler(struct InputEvent* events, APTR data)
-{
-    if (data) {
-        Counter* mc = (Counter *)data;
-        mc->called++;
-    }
-
-    return events;
-}
-#else
 static struct InputEvent* InputEventHandler(struct InputEvent* events, APTR data)
 {
     if (!(events && data)) {
@@ -181,7 +204,6 @@ static struct InputEvent* InputEventHandler(struct InputEvent* events, APTR data
 
     return events;
 }
-#endif
 
 static void SendCommand(struct IOStdReq * req, struct Interrupt * is, const int command)
 {

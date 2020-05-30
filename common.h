@@ -2,8 +2,8 @@
 
 void CalculateStats();
 
-//char* ActivityTotalString();
-char* ActivityString();
+char* AllActivityString();
+char* CurrentActivityString();
 char* BreakString();
 char* TotalBreaksString();
 
