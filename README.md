@@ -1,18 +1,20 @@
-# activity-meter
+# Activity meter 1.0
 
 Mouse and keyboard activity meter for AmigaOS 4.
 
 ## Statistics explained
 
-"Activity time" records total time, including breaks.
+- "All activity time" records total running time.
 
-"Break time" records current inactivity.
+- "Current activity time" records current activity.
 
-"Total breaks" counter records periods of inactivity, lasting at least 5 minutes.
+- "Break time" records current inactivity.
 
-"LMB", "MMB", "RMB", "4th" and "5th" records corresponding mouse button down presses.
+- "Total breaks" counter records periods of inactivity, lasting at least 5 minutes.
 
-"Pixels travelled" tracks mouse movement but is not very accurate.
+- "LMB", "MMB", "RMB", "4th" and "5th" records corresponding mouse button down presses.
 
-"Keys pressed" counts key down events.
+- "Pixels travelled" tracks mouse movement but it does not seem to be very accurate.
+
+- "Keys pressed" counts key down events.
 
