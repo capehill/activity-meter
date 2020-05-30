@@ -12,7 +12,7 @@ Mouse and keyboard activity meter for AmigaOS 4.
 
 - "Total breaks" counter records periods of inactivity, lasting at least 5 minutes.
 
-- "LMB", "MMB", "RMB", "4th" and "5th" records corresponding mouse button down presses.
+- "LMB", "MMB", "RMB", "4th" and "5th" record corresponding mouse button down presses.
 
 - "Pixels travelled" tracks mouse movement but it does not seem to be very accurate.
 
