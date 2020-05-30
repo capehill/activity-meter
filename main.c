@@ -31,11 +31,8 @@ typedef struct Statistics
 {
     size_t startTime;
     size_t startTimeCurrent;
-    size_t activeMinutesTotal;
     size_t activeSecondsTotal;
-    size_t activeMinutes;
     size_t activeSeconds;
-    size_t breakMinutes;
     size_t breakSeconds;
     size_t currentBreakDuration;
     size_t breaks;
@@ -59,9 +56,9 @@ static size_t SecsToMins(size_t seconds)
     return seconds / 60;
 }
 
-static size_t MinsToSecs(size_t minutes)
+static size_t ModMinute(size_t seconds)
 {
-    return minutes * 60;
+    return seconds % 60;
 }
 
 static void InitStats()
@@ -76,12 +73,12 @@ static void InitStats()
 static void CalculateTotalActivity()
 {
     stats.activeSecondsTotal = counter->lastTime - stats.startTime;
-    stats.activeMinutesTotal = SecsToMins(stats.activeSecondsTotal);
 }
 
 static void Accumulate()
 {
-    const BOOL passive = counter->lastTime ? (TimerGetSysTime().Seconds > counter->lastTime) : TRUE;
+    const size_t delta = TimerGetSysTime().Seconds - counter->lastTime;
+    const BOOL passive = counter->lastTime ? delta > 4 : TRUE;
 
     if (passive) {
         stats.breakSeconds++;
@@ -90,9 +87,6 @@ static void Accumulate()
         stats.breakSeconds = 0;
         stats.activeSeconds++;
     }
-
-    stats.breakMinutes = SecsToMins(stats.breakSeconds);
-    stats.activeMinutes = SecsToMins(stats.activeSeconds);
 }
 
 static void RegisterBreaks()
@@ -109,7 +103,6 @@ static void RegisterBreaks()
 
 void CalculateStats()
 {
-    InitStats();
     CalculateTotalActivity();
     Accumulate();
     RegisterBreaks();
@@ -119,21 +112,23 @@ char* AllActivityString()
 {
     static char buf[64];
     snprintf(buf, sizeof(buf), "All activity time: %u min %u secs",
-        stats.activeMinutesTotal, stats.activeSecondsTotal - MinsToSecs(stats.activeMinutesTotal));
+        SecsToMins(stats.activeSecondsTotal), ModMinute(stats.activeSecondsTotal));
     return buf;
 }
 
 char* CurrentActivityString()
 {
     static char buf[64];
-    snprintf(buf, sizeof(buf), "Current activity time: %u min %u secs", stats.activeMinutes, stats.activeSeconds - MinsToSecs(stats.activeMinutes));
+    snprintf(buf, sizeof(buf), "Current activity time: %u min %u secs",
+        SecsToMins(stats.activeSeconds), ModMinute(stats.activeSeconds));
     return buf;
 }
 
 char* BreakString()
 {
     static char buf[64];
-    snprintf(buf, sizeof(buf), "Break time: %u min %u secs", stats.breakMinutes, stats.breakSeconds - MinsToSecs(stats.breakMinutes));
+    snprintf(buf, sizeof(buf), "Break time: %u min %u secs",
+        SecsToMins(stats.breakSeconds), ModMinute(stats.breakSeconds));
     return buf;
 }
 
@@ -207,14 +202,16 @@ static struct InputEvent* InputEventHandler(struct InputEvent* events, APTR data
 
 static void SendCommand(struct IOStdReq * req, struct Interrupt * is, const int command)
 {
-    Log("Send command %d", command);
+    //Log("Send command %d", command);
 
     req->io_Command = command;
     req->io_Data = is;
 
     const int err = IExec->DoIO((struct IORequest *)req);
 
-    Log("err %d, %d", err, req->io_Error);
+    if (err) {
+        Log("err %d, %d", err, req->io_Error);
+    }
 }
 
 static void SetupHandler(struct IOStdReq * req)
@@ -228,6 +225,8 @@ static void SetupHandler(struct IOStdReq * req)
         puts("Failed to allocate event handler data");
         return;
     }
+
+    InitStats();
 
     struct Interrupt* is = (struct Interrupt *)IExec->AllocSysObjectTags(ASOT_INTERRUPT,
         ASOINTR_Code, InputEventHandler,
@@ -260,7 +259,6 @@ static void SetupHandler(struct IOStdReq * req)
     IExec->FreeVec(counter);
 }
 
-#if 1
 static void CheckStack()
 {
     struct Task* task = IExec->FindTask(NULL);
@@ -275,7 +273,6 @@ static void CheckStack()
         }
     }
 }
-#endif
 
 int main(void)
 {

@@ -26,11 +26,6 @@ void TimerStop(TimerContext * tc);
 void TimerHandleEvents(TimerContext * tc);
 
 ESignalType TimerWaitForSignal(uint32 timerSig, const char* const name);
-void TimerDelay(ULONG seconds);
-
-//double TimerTicksToSeconds(const uint64 ticks);
-//double timer_ticks_to_ms(const uint64 ticks);
-//double timer_ticks_to_us(const uint64 ticks);
 
 struct TimeVal TimerGetSysTime();
 

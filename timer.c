@@ -188,38 +188,6 @@ ESignalType TimerWaitForSignal(uint32 timerSig, const char* const name)
     return ESignalType_Timer;
 }
 
-void TimerDelay(ULONG seconds)
-{
-    const ULONG micros = 0;
-
-    TimerContext delayTimer;
-
-    TimerInit(&delayTimer);
-    TimerStart(&delayTimer, seconds, micros);
-
-    TimerWaitForSignal(TimerSignal(&delayTimer), "Delay");
-
-    TimerStop(&delayTimer);
-    TimerQuit(&delayTimer);
-}
-
-#if 0
-double timer_ticks_to_s(const uint64 ticks)
-{
-    return (double)ticks / (double)frequency;
-}
-
-double timer_ticks_to_ms(const uint64 ticks)
-{
-    return 1000.0 * timer_ticks_to_s(ticks);
-}
-
-double timer_ticks_to_us(const uint64 ticks)
-{
-    return 1000000.0 * timer_ticks_to_s(ticks);
-}
-#endif
-
 struct TimeVal TimerGetSysTime()
 {
     struct TimeVal tv;
