@@ -233,7 +233,6 @@ static void HandleEvents(void)
 
         if (wait & SIGBREAKF_CTRL_C) {
             puts("*** Break ***");
-            running = FALSE;
             break;
         }
 
