@@ -256,7 +256,7 @@ static void HandleEvents(void)
                         running = HandleMenuPick(result & WMHI_MENUMASK);
                         break;
                     default:
-                        Log("Unknown event %lu", result);
+                        //Log("Unknown event %lu", result);
                         break;
                 }
             }

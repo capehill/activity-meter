@@ -2,6 +2,7 @@
 #include "timer.h"
 #include "common.h"
 #include "version.h"
+#include "logger.h"
 
 #include <proto/exec.h>
 #include <proto/dos.h>
@@ -184,14 +185,14 @@ static struct InputEvent* InputEventHandler(struct InputEvent* events, APTR data
 
 static void SendCommand(struct IOStdReq * req, struct Interrupt * is, const int command)
 {
-    printf("Send command %d\n", command);
+    Log("Send command %d", command);
 
     req->io_Command = command;
     req->io_Data = is;
 
     const int err = IExec->DoIO((struct IORequest *)req);
 
-    printf("err %d, %d\n", err, req->io_Error);
+    Log("err %d, %d", err, req->io_Error);
 }
 
 static void SetupHandler(struct IOStdReq * req)
@@ -223,7 +224,7 @@ static void SetupHandler(struct IOStdReq * req)
 
         IExec->FreeSysObject(ASOT_INTERRUPT, is);
 
-        printf("Stats: left %zu, middle %zu, right %zu. Distance %zu pixels, called %zu times, keys %zu\n",
+        Log("Stats: left %zu, middle %zu, right %zu. Distance %zu pixels, called %zu times, keys %zu",
             counter->left,
             counter->middle,
             counter->right,
@@ -247,7 +248,7 @@ static void CheckStack()
 
     for (uint32* ptr = lower; ptr <= upper; ptr++) {
         if (*ptr != 0 && *ptr != 0xbad1bad3) {
-            printf("....%u bytes left on stack, used %u\n", (ptr - lower) * 4, (upper - ptr) * 4);
+            Log("....%u bytes left on stack, used %u", (ptr - lower) * 4, (upper - ptr) * 4);
             return;
         }
     }
