@@ -29,13 +29,6 @@ enum EObject {
     OID_Count // KEEP LAST
 };
 
-enum EGadget {
-    GID_Trace,
-    GID_Pause,
-    GID_StartProfiling,
-    GID_FinishProfiling
-};
-
 typedef enum EMenu {
     MID_Iconify = 1,
     MID_About,
@@ -179,6 +172,8 @@ static void RefreshObject(Object * object)
 
 static void Refresh()
 {
+    CalculateStats();
+
     IIntuition->SetAttrs(objects[OID_MouseCounter], GA_Text, MouseCounterString(), TAG_DONE);
     IIntuition->SetAttrs(objects[OID_KeyCounter], GA_Text, KeyCounterString(), TAG_DONE);
     IIntuition->SetAttrs(objects[OID_Pixels], GA_Text, PixelsString(), TAG_DONE);
@@ -194,16 +189,6 @@ static void Refresh()
     RefreshObject(objects[OID_Activity]);
     RefreshObject(objects[OID_BreakDuration]);
     RefreshObject(objects[OID_Breaks]);
-}
-
-static void HandleGadgets(int id)
-{
-    //printf("Gadget %d\n", id);
-
-    switch (id) {
-        case GID_Trace:
-            break;
-    }
 }
 
 static void HandleIconify(void)
@@ -261,9 +246,6 @@ static void HandleEvents(void)
                     case WMHI_CLOSEWINDOW:
                         running = FALSE;
                         break;
-                    case WMHI_GADGETUP:
-                        HandleGadgets(result & WMHI_GADGETMASK);
-                        break;
                     case WMHI_ICONIFY:
                         HandleIconify();
                         break;
@@ -272,6 +254,9 @@ static void HandleEvents(void)
                         break;
                     case WMHI_MENUPICK:
                         running = HandleMenuPick(result & WMHI_MENUMASK);
+                        break;
+                    default:
+                        Log("Unknown event %lu", result);
                         break;
                 }
             }
@@ -287,7 +272,6 @@ static void HandleEvents(void)
     }
 }
 
-// When profiling, Pause/Resume buttons are disabled
 void RunGui()
 {
 	port = IExec->AllocSysObjectTags(ASOT_PORT,

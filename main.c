@@ -24,16 +24,24 @@ typedef struct Counter
     size_t called;
     size_t lastTime;
     size_t keys;
+} Counter;
+
+typedef struct Statistics
+{
+    size_t startTime;
+    size_t startTimeCurrent;
+    size_t activeMinutes;
+    size_t activeSeconds;
+    size_t breakMinutes;
+    size_t breakSeconds;
     size_t totalBreakDuration;
     size_t currentBreakDuration;
     size_t breaks;
     BOOL breakRegistered;
-} Counter;
+} Statistics;
 
 static Counter* counter;
-
-static size_t startTime;
-static size_t startTimeCurrent;
+static Statistics stats;
 
 static const size_t BREAK_LENGTH = 5 * 60;
 
@@ -46,72 +54,57 @@ char* PixelsString()
 
 // All activity
 // Current activity
-// Current break
 
-/*
-char* total_activity_string()
+void CalculateStats()
 {
-    static char buf[64];
-
-    if (startTime == 0) {
-        startTime = mouseCounter->lastTime;
-        startTimeCurrent = startTime;
+    if (stats.startTime == 0) {
+        // Initialize
+        stats.startTime = counter->lastTime;
+        stats.startTimeCurrent = stats.startTime;
     }
 
-  //  const size_t now = timer_get_systime().Seconds;
-    const size_t seconds = mouseCounter->lastTime - startTime;
-    const size_t minutes = seconds / 60;
+    const size_t now = TimerGetSysTime().Seconds;
 
-    snprintf(buf, sizeof(buf), "Mouse active total: %u min %u secs", minutes, seconds - (minutes * 60));
-    return buf;
+    stats.activeSeconds = counter->lastTime - stats.startTime;
+    stats.activeMinutes = stats.activeSeconds / 60;
+
+    stats.breakSeconds = counter->lastTime ? (now - counter->lastTime) : 0;
+    stats.breakMinutes = stats.breakSeconds / 60;
+
+    if (stats.breakSeconds == 0) {
+        // Break ended
+        stats.startTimeCurrent = counter->lastTime;
+    }
+
+    stats.currentBreakDuration = stats.breakSeconds;
+
+    if (!stats.breakRegistered && stats.currentBreakDuration >= BREAK_LENGTH) {
+        stats.breaks++;
+        stats.breakRegistered = TRUE;
+    } else if (stats.breakRegistered && stats.currentBreakDuration < BREAK_LENGTH) {
+        stats.breakRegistered = FALSE;
+    }
+
 }
-*/
+
 char* ActivityString()
 {
     static char buf[64];
-
-    if (startTime == 0) {
-        startTime = counter->lastTime;
-        startTimeCurrent = startTime;
-    }
-
-    const size_t seconds = counter->lastTime - startTime;
-    const size_t minutes = seconds / 60;
-
-    snprintf(buf, sizeof(buf), "Activity time: %u min %u secs", minutes, seconds - (minutes * 60));
+    snprintf(buf, sizeof(buf), "Activity time: %u min %u secs", stats.activeMinutes, stats.activeSeconds - (stats.activeMinutes * 60));
     return buf;
 }
 
 char* BreakString()
 {
     static char buf[64];
-
-    const size_t now = TimerGetSysTime().Seconds;
-
-    const size_t seconds = counter->lastTime ? now - counter->lastTime : 0;
-    const size_t minutes = seconds / 60;
-
-    if (seconds == 0) {
-        startTimeCurrent = counter->lastTime;
-    }
-
-    counter->currentBreakDuration = seconds;
-
-    if (!counter->breakRegistered && counter->currentBreakDuration >= BREAK_LENGTH) {
-        counter->breaks++;
-        counter->breakRegistered = TRUE;
-    } else if (counter->breakRegistered && counter->currentBreakDuration < BREAK_LENGTH) {
-        counter->breakRegistered = FALSE;
-    }
-
-    snprintf(buf, sizeof(buf), "Break time: %u min %u secs", minutes, seconds - (minutes * 60));
+    snprintf(buf, sizeof(buf), "Break time: %u min %u secs", stats.breakMinutes, stats.breakSeconds - (stats.breakMinutes * 60));
     return buf;
 }
 
 char* TotalBreaksString()
 {
     static char buf[32];
-    snprintf(buf, sizeof(buf), "Total breaks: %u", counter->breaks);
+    snprintf(buf, sizeof(buf), "Total breaks: %u", stats.breaks);
     return buf;
 }
 
@@ -129,7 +122,6 @@ char* KeyCounterString()
     snprintf(buf, sizeof(buf), "Keys pressed: %u", counter->keys);
     return buf;
 }
-
 
 #if 0
 static struct InputEvent* InputEventHandler(struct InputEvent* events, APTR data)

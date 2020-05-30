@@ -1,6 +1,8 @@
 #pragma once
 
-char* ActivityTotalString();
+void CalculateStats();
+
+//char* ActivityTotalString();
 char* ActivityString();
 char* BreakString();
 char* TotalBreaksString();
