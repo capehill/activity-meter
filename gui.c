@@ -77,6 +77,49 @@ static struct MsgPort* port;
 static const ULONG seconds = 1;
 static const ULONG micros = 0;
 
+static struct ClassLibrary* WindowBase;
+static struct ClassLibrary* RequesterBase;
+static struct ClassLibrary* ButtonBase;
+static struct ClassLibrary* LayoutBase;
+
+static Class* WindowClass;
+static Class* RequesterClass;
+static Class* ButtonClass;
+static Class* LayoutClass;
+
+static void OpenClasses()
+{
+    const int version = 53;
+
+    WindowBase = IIntuition->OpenClass("window.class", version, &WindowClass);
+    if (!WindowBase) {
+        puts("Failed to open window.class");
+    }
+
+    RequesterBase = IIntuition->OpenClass("requester.class", version, &RequesterClass);
+    if (!RequesterBase) {
+        puts("Failed to open requester.class");
+    }
+
+    ButtonBase = IIntuition->OpenClass("gadgets/button.gadget", version, &ButtonClass);
+    if (!ButtonBase) {
+        puts("Failed to open button.gadget");
+    }
+
+    LayoutBase = IIntuition->OpenClass("gadgets/layout.gadget", version, &LayoutClass);
+    if (!LayoutBase) {
+        puts("Failed to open layout.gadget");
+    }
+}
+
+static void CloseClasses()
+{
+    IIntuition->CloseClass(WindowBase);
+    IIntuition->CloseClass(RequesterBase);
+    IIntuition->CloseClass(ButtonBase);
+    IIntuition->CloseClass(LayoutBase);
+}
+
 static char* GetApplicationName()
 {
     #define maxPathLen 255
@@ -110,7 +153,7 @@ static struct DiskObject* MyGetDiskObject()
 
 static void ShowAboutWindow()
 {
-    objects[OID_AboutWindow] = IIntuition->NewObject(NULL, "requester.class",
+    objects[OID_AboutWindow] = IIntuition->NewObject(RequesterClass, NULL,
         REQ_TitleText, "About Activity meter",
         REQ_BodyText, VERSION_STRING DATE_STRING,
         REQ_GadgetText, "_Ok",
@@ -128,7 +171,7 @@ static void ShowAboutWindow()
 
 static Object* CreateGui()
 {
-    return IIntuition->NewObject(NULL, "window.class",
+    return IIntuition->NewObject(WindowClass, NULL,
         WA_ScreenTitle, VERSION_STRING DATE_STRING,
         WA_Title, NAME_STRING,
         WA_Activate, TRUE,
@@ -144,49 +187,49 @@ static Object* CreateGui()
         WINDOW_AppPort, port, // Iconification needs it
         WINDOW_GadgetHelp, TRUE,
         WINDOW_NewMenu, menus,
-        WINDOW_Layout, IIntuition->NewObject(NULL, "layout.gadget",
+        WINDOW_Layout, IIntuition->NewObject(LayoutClass, NULL,
             LAYOUT_Orientation, LAYOUT_ORIENT_VERT,
-            LAYOUT_AddChild, IIntuition->NewObject(NULL, "layout.gadget",
+            LAYOUT_AddChild, IIntuition->NewObject(LayoutClass, NULL,
                 LAYOUT_Orientation, LAYOUT_ORIENT_VERT,
                 LAYOUT_Label, "Information",
                 LAYOUT_BevelStyle, BVS_GROUP,
-                LAYOUT_AddChild, objects[OID_AllActivity] = IIntuition->NewObject(NULL, "button.gadget",
+                LAYOUT_AddChild, objects[OID_AllActivity] = IIntuition->NewObject(ButtonClass, NULL,
                     GA_ReadOnly, TRUE,
                     GA_Text, AllActivityString(),
                     BUTTON_BevelStyle, BVS_NONE,
                     BUTTON_Transparent, TRUE,
                     TAG_DONE),
-                LAYOUT_AddChild, objects[OID_CurrentActivity] = IIntuition->NewObject(NULL, "button.gadget",
+                LAYOUT_AddChild, objects[OID_CurrentActivity] = IIntuition->NewObject(ButtonClass, NULL,
                     GA_ReadOnly, TRUE,
                     GA_Text, CurrentActivityString(),
                     BUTTON_BevelStyle, BVS_NONE,
                     BUTTON_Transparent, TRUE,
                     TAG_DONE),
-                LAYOUT_AddChild, objects[OID_BreakDuration] = IIntuition->NewObject(NULL, "button.gadget",
+                LAYOUT_AddChild, objects[OID_BreakDuration] = IIntuition->NewObject(ButtonClass, NULL,
                     GA_ReadOnly, TRUE,
                     GA_Text, BreakString(),
                     BUTTON_BevelStyle, BVS_NONE,
                     BUTTON_Transparent, TRUE,
                     TAG_DONE),
-                LAYOUT_AddChild, objects[OID_Breaks] = IIntuition->NewObject(NULL, "button.gadget",
+                LAYOUT_AddChild, objects[OID_Breaks] = IIntuition->NewObject(ButtonClass, NULL,
                     GA_ReadOnly, TRUE,
                     GA_Text, TotalBreaksString(),
                     BUTTON_BevelStyle, BVS_NONE,
                     BUTTON_Transparent, TRUE,
                     TAG_DONE),
-                LAYOUT_AddChild, objects[OID_MouseCounter] = IIntuition->NewObject(NULL, "button.gadget",
+                LAYOUT_AddChild, objects[OID_MouseCounter] = IIntuition->NewObject(ButtonClass, NULL,
                     GA_ReadOnly, TRUE,
                     GA_Text, MouseCounterString(),
                     BUTTON_BevelStyle, BVS_NONE,
                     BUTTON_Transparent, TRUE,
                     TAG_DONE),
-                LAYOUT_AddChild, objects[OID_Pixels] = IIntuition->NewObject(NULL, "button.gadget",
+                LAYOUT_AddChild, objects[OID_Pixels] = IIntuition->NewObject(ButtonClass, NULL,
                     GA_ReadOnly, TRUE,
                     GA_Text, PixelsString(),
                     BUTTON_BevelStyle, BVS_NONE,
                     BUTTON_Transparent, TRUE,
                     TAG_DONE),
-                LAYOUT_AddChild, objects[OID_KeyCounter] = IIntuition->NewObject(NULL, "button.gadget",
+                LAYOUT_AddChild, objects[OID_KeyCounter] = IIntuition->NewObject(ButtonClass, NULL,
                     GA_ReadOnly, TRUE,
                     GA_Text, KeyCounterString(),
                     BUTTON_BevelStyle, BVS_NONE,
@@ -308,6 +351,8 @@ static void HandleEvents(void)
 
 void RunGui()
 {
+    OpenClasses();
+
 	port = IExec->AllocSysObjectTags(ASOT_PORT,
 		ASOPORT_Name, "app_port",
 		TAG_DONE);
@@ -332,4 +377,6 @@ void RunGui()
     if (port) {
         IExec->FreeSysObject(ASOT_PORT, port);
     }
+
+    CloseClasses();
 }
